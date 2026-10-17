@@ -1,0 +1,133 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Ledger — Personal Expense Tracker</title>
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='white'%3E%3Cg transform='rotate(-30 12 12)'%3E%3Ccircle cx='7.3' cy='3.2' r='1.45'/%3E%3Crect x='5.5' y='4.7' width='3.6' height='14.6' rx='1.8'/%3E%3Crect x='14.9' y='4.7' width='3.6' height='14.6' rx='1.8'/%3E%3Ccircle cx='16.7' cy='20.8' r='1.45'/%3E%3C/g%3E%3C/svg%3E">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:ital,opsz,wght@0,14..32,100..900&family=Instrument+Serif:ital@1&display=swap">
+<style>
+html,body{background:#000!important;color:#fff}
+:root{--bg:#000;--text:#fff;--muted:#9a9a9a;--stat:#d8d8d8;--border:rgba(255,255,255,.16);color-scheme:dark;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
+*{box-sizing:border-box;margin:0;padding:0}
+html{scroll-behavior:smooth;scroll-padding-top:env(safe-area-inset-top,0px)}
+body{font-family:"Inter",system-ui,-apple-system,"Segoe UI",sans-serif;-webkit-font-smoothing:antialiased;text-rendering:optimizeLegibility;overflow-x:hidden;min-height:100vh}
+button,input,select{font-family:inherit}
+.wrap{max-width:880px;margin:0 auto;padding:22px 20px 64px}
+header{display:flex;align-items:center;justify-content:space-between;margin-bottom:56px}
+.logo{display:inline-flex;align-items:center;gap:9px;font-weight:600;font-size:16px;letter-spacing:-.03em}
+.logo span{font-weight:400}
+.badge{display:inline-flex;gap:8px;padding:9px 15px;border-radius:5px;background:linear-gradient(90deg,#7d7d7d,#2a2a2a 52%,#0a0a0a);color:#f2f2f2;font-size:12.5px;letter-spacing:-.01em}
+h1{font-weight:500;letter-spacing:-.045em;line-height:1.12;font-size:clamp(34px,6vw,52px);margin:18px 0 10px}
+h1 em{font-family:"Instrument Serif","Times New Roman",serif;font-style:italic;font-weight:400;font-size:1.08em;letter-spacing:-.03em;color:var(--muted)}
+.lede{color:var(--muted);font-size:15.5px;line-height:1.55;letter-spacing:-.015em;max-width:470px}
+.btn{position:relative;isolation:isolate;overflow:hidden;display:inline-flex;align-items:center;justify-content:center;height:42px;padding:0 18px;border-radius:6px;font-size:13.5px;font-weight:500;letter-spacing:-.02em;white-space:nowrap;cursor:pointer;transition:.35s;border:1px solid #fff;color:#111;background:linear-gradient(180deg,#fff,#e7e7e7 48%,#cfcfcf);box-shadow:inset 0 1px 0 rgba(255,255,255,.95)}
+.btn::after{content:"";position:absolute;inset:0;z-index:-1;background:linear-gradient(115deg,transparent 20%,rgba(255,255,255,.45) 48%,transparent 76%);transform:translateX(-130%);transition:transform .65s ease}
+.btn:hover{background:linear-gradient(180deg,#fff,#f3f6ff 42%,#d5def2);box-shadow:inset 0 1px 0 #fff,0 0 22px rgba(186,208,255,.35)}
+.btn:hover::after{transform:translateX(130%)}
+.btn.ghost{color:#fff;border-color:rgba(198,198,198,.45);background:linear-gradient(135deg,rgba(255,255,255,.1),rgba(0,0,0,.45) 50%,rgba(160,175,200,.08));box-shadow:inset 0 1px 0 rgba(255,255,255,.12)}
+.btn.ghost:hover{border-color:rgba(220,230,255,.75);box-shadow:0 0 20px rgba(170,200,255,.22)}
+.stats{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin:36px 0 28px}
+.card{border:1px solid var(--border);border-radius:8px;padding:18px;background:rgba(255,255,255,.02)}
+.card small{display:block;color:var(--muted);font-size:12.5px;margin-bottom:8px}
+.card b{font-size:26px;font-weight:500;letter-spacing:-.04em;color:#fff}
+.bar{height:5px;border-radius:3px;background:rgba(255,255,255,.1);margin-top:12px;overflow:hidden}
+.bar i{display:block;height:100%;background:linear-gradient(90deg,#7d7d7d,#fff);transition:width .5s}
+.bar i.over{background:#f26b1d}
+form{display:grid;grid-template-columns:1fr 1.2fr 1.2fr 1.2fr auto;gap:10px;margin-bottom:28px}
+input,select{height:42px;padding:0 12px;border-radius:6px;border:1px solid rgba(198,198,198,.45);background:linear-gradient(105deg,#050505,#2a2a2a 48%,#4a4a4a);color:#f3f3f3;font-size:14px;min-width:0;outline:none}
+input:focus,select:focus{border-color:rgba(235,235,235,.9);box-shadow:0 0 18px rgba(200,210,230,.18)}
+select option{background:#111}
+input[type=date]{color-scheme:dark}
+h2{font-weight:500;letter-spacing:-.03em;font-size:20px;margin:0 0 14px}
+.two{display:grid;grid-template-columns:1fr 1.4fr;gap:28px}
+.cat{margin-bottom:14px;font-size:13.5px;color:var(--stat)}
+.cat div{display:flex;justify-content:space-between}
+.row{display:flex;align-items:center;gap:14px;padding:13px 0;border-bottom:1px solid rgba(255,255,255,.12);font-size:14px;color:var(--stat)}
+.row .m{flex:1;min-width:0}.row .m span{display:block;color:var(--muted);font-size:12.5px;margin-top:2px}
+.row b{font-weight:500;color:#fff}
+.x{background:none;border:0;color:var(--muted);cursor:pointer;font-size:18px;padding:4px 8px}.x:hover{color:#fff}
+.empty{color:var(--muted);font-size:14px;padding:20px 0}
+.tools{display:flex;gap:10px;align-items:center;margin-bottom:14px;color:var(--muted);font-size:13px}
+.tools input{height:34px;width:130px}
+@media(max-width:760px){.stats{grid-template-columns:1fr}form{grid-template-columns:1fr 1fr}form .btn{grid-column:1/-1}.two{grid-template-columns:1fr}}
+@media(prefers-reduced-motion:reduce){*{transition:none!important}}
+</style>
+</head>
+<body style="background:#000;color:#fff">
+<div class="wrap">
+  <header>
+    <a class="logo" href="#"><svg width="22" height="22" viewBox="0 0 24 24" fill="currentColor"><g transform="rotate(-30 12 12)"><circle cx="7.3" cy="3.2" r="1.45"/><rect x="5.5" y="4.7" width="3.6" height="14.6" rx="1.8"/><rect x="14.9" y="4.7" width="3.6" height="14.6" rx="1.8"/><circle cx="16.7" cy="20.8" r="1.45"/></g></svg>Ledger<span>.me</span></a>
+    <button class="btn ghost" id="reset" style="height:36px">Clear all</button>
+  </header>
+
+  <span class="badge">Personal Expense Tracker</span>
+  <h1>Know where every <em>rupee</em> goes.</h1>
+  <p class="lede">Log spending in seconds, watch your monthly budget, and see your habits by category. Stored privately in your browser.</p>
+
+  <div class="stats">
+    <div class="card"><small>Spent this month</small><b id="total">₹0</b></div>
+    <div class="card"><small>Budget <button class="x" id="setBudget" style="font-size:12px;padding:0 4px;text-decoration:underline">edit</button></small><b id="budget">₹0</b><div class="bar"><i id="bar" style="width:0"></i></div></div>
+    <div class="card"><small>Left to spend</small><b id="left">₹0</b></div>
+  </div>
+
+  <form id="f">
+    <input id="amt" type="number" min="0" step="0.01" placeholder="Amount (₹)" required>
+    <select id="cat"><option>Food</option><option>Transport</option><option>Rent</option><option>Shopping</option><option>Bills</option><option>Health</option><option>Fun</option><option>Other</option></select>
+    <input id="note" type="text" placeholder="Note (optional)">
+    <input id="date" type="date" required>
+    <button class="btn" type="submit">Add expense</button>
+  </form>
+
+  <div class="two">
+    <section><h2>By category</h2><div id="cats"></div></section>
+    <section>
+      <h2>Expenses</h2>
+      <div class="tools">Month <input id="month" type="month"></div>
+      <div id="list"></div>
+    </section>
+  </div>
+</div>
+<script>
+(function(){
+  var $=function(i){return document.getElementById(i)};
+  var inr=function(n){return "₹"+Math.round(n).toLocaleString("en-IN")};
+  var today=new Date().toISOString().slice(0,10);
+  $("date").value=today;$("month").value=today.slice(0,7);
+  function esc(s){return String(s).replace(/[&<>"]/g,function(c){return{"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]})}
+  function key(){try{return localStorage.getItem("ledger:key")||""}catch(e){return ""}}
+  function api(method,url,body){
+    var h={"Content-Type":"application/json"};if(key())h["x-api-key"]=key();
+    return fetch(url,{method:method,headers:h,body:body?JSON.stringify(body):undefined}).then(function(r){
+      if(r.status===401){var k=prompt("Enter your API key");if(k){try{localStorage.setItem("ledger:key",k)}catch(e){}return api(method,url,body)}throw new Error("Unauthorized")}
+      if(r.status===204)return null;
+      return r.json().then(function(d){if(!r.ok)throw new Error(d.error||"Request failed");return d});
+    });
+  }
+  function fail(e){alert(e.message||"Something went wrong")}
+  function render(){
+    var m=$("month").value||today.slice(0,7);
+    Promise.all([api("GET","/api/expenses?month="+m),api("GET","/api/summary?month="+m)]).then(function(res){
+      var its=res[0],s=res[1],tot=s.total;
+      $("total").textContent=inr(tot);$("budget").textContent=inr(s.budget);
+      $("left").textContent=(s.left<0?"−":"")+inr(Math.abs(s.left));
+      var p=s.budget?Math.min(100,tot/s.budget*100):0;$("bar").style.width=p+"%";$("bar").className=tot>s.budget?"over":"";
+      $("cats").innerHTML=s.byCategory.length?s.byCategory.map(function(c){return '<div class="cat"><div><span>'+esc(c.category)+'</span><span>'+inr(c.total)+'</span></div><div class="bar"><i style="width:'+(c.total/tot*100)+'%"></i></div></div>'}).join(""):'<p class="empty">Nothing yet.</p>';
+      $("list").innerHTML=its.length?its.map(function(x){return '<div class="row"><div class="m">'+esc(x.note||x.category)+'<span>'+esc(x.category)+' · '+new Date(x.date+"T00:00").toLocaleDateString("en-IN",{day:"numeric",month:"short"})+'</span></div><b>'+inr(x.amount)+'</b><button class="x" data-id="'+x.id+'" aria-label="Delete">×</button></div>'}).join(""):'<p class="empty">No expenses this month. Add your first one above.</p>';
+    }).catch(fail);
+  }
+  $("f").addEventListener("submit",function(e){
+    e.preventDefault();var a=parseFloat($("amt").value);if(!(a>0))return;
+    api("POST","/api/expenses",{amount:a,category:$("cat").value,note:$("note").value.trim(),date:$("date").value}).then(function(){
+      $("amt").value="";$("note").value="";$("month").value=$("date").value.slice(0,7);render();$("amt").focus();
+    }).catch(fail);
+  });
+  $("list").addEventListener("click",function(e){var id=e.target.getAttribute("data-id");if(!id)return;api("DELETE","/api/expenses/"+id).then(render).catch(fail)});
+  $("month").addEventListener("change",render);
+  $("setBudget").addEventListener("click",function(){var v=prompt("Monthly budget (₹)");if(v===null)return;v=parseFloat(v);if(v>=0)api("PUT","/api/budget",{amount:v}).then(render).catch(fail)});
+  $("reset").addEventListener("click",function(){if(confirm("Delete all expenses?"))api("DELETE","/api/expenses").then(render).catch(fail)});
+  render();
+})();
+</script>
+</body>
+</html>
