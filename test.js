@@ -1,8 +1,8 @@
-process.env.DB_PATH = ":memory:";
+process.env.TURSO_DATABASE_URL = ":memory:";
 process.env.API_KEY = "secret";
 const assert = require("assert");
 const app = require("./server");
-const srv = app.listen(0, async () => {
+app.ready.then(() => { const srv = app.listen(0, async () => {
   const base = `http://localhost:${srv.address().port}`;
   const H = { "Content-Type": "application/json", "x-api-key": "secret" };
   const f = (m, u, b, h = H) => fetch(base + u, { method: m, headers: h, body: b && JSON.stringify(b) });
@@ -28,4 +28,5 @@ const srv = app.listen(0, async () => {
     console.log("All tests passed");
   } catch (e) { console.error("FAIL", e); process.exitCode = 1; }
   srv.close();
+});
 });
