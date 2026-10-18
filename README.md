@@ -1,23 +1,10 @@
 # Ledger backend
+Node + Express + libSQL (Turso). Sign in with Google; every user only sees their own data.
 
-Node + Express + libSQL (Turso cloud, or a local file when no env vars are set). Serves the frontend from `public/` and the API from `/api`.
+Env vars:
+- `GOOGLE_CLIENT_ID` (required) - OAuth Web client ID from Google Cloud
+- `OWNER_EMAIL` (recommended) - your Gmail; only this account adopts expenses saved before Google login existed
+- `ALLOWED_EMAILS` (optional) - comma-separated Gmail list; if set, only these (plus the owner) can sign in
+- `TURSO_DATABASE_URL`, `TURSO_AUTH_TOKEN` - cloud database (local file fallback via `DB_PATH`)
 
-## Run
-    npm install
-    API_KEY=pick-a-secret npm start      # http://localhost:3000
-
-Env vars: `PORT` (3000), `TURSO_DATABASE_URL` + `TURSO_AUTH_TOKEN` (cloud DB), `DB_PATH` (local fallback, ./ledger.db), `API_KEY` (optional; if set, all /api calls need an `x-api-key` header; the page asks for it once).
-
-## API
-| Method | Path | Notes |
-|---|---|---|
-| GET | /api/expenses?month=YYYY-MM | list, newest first |
-| POST | /api/expenses | {amount, category, note?, date} |
-| DELETE | /api/expenses/:id | |
-| DELETE | /api/expenses | clear all |
-| GET / PUT | /api/budget | {amount} |
-| GET | /api/summary?month=YYYY-MM | total, budget, left, byCategory |
-| GET | /api/export.csv | all expenses |
-| GET | /api/health | no auth |
-
-Amounts are stored as integer paise, so there are no float rounding errors. Run `npm test` for the API tests.
+`npm test` runs the API tests.

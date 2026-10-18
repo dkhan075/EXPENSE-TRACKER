@@ -52,13 +52,30 @@ h2{font-weight:500;letter-spacing:-.03em;font-size:20px;margin:0 0 14px}
 .tools input{height:34px;width:130px}
 @media(max-width:760px){.stats{grid-template-columns:1fr}form{grid-template-columns:1fr 1fr}form .btn{grid-column:1/-1}.two{grid-template-columns:1fr}}
 @media(prefers-reduced-motion:reduce){*{transition:none!important}}
+.hidden{display:none!important}
+.login{min-height:100vh;display:flex;align-items:center;justify-content:center;padding:24px 20px}
+.loginbox{max-width:520px;width:100%}
+.hint{color:var(--muted);font-size:13px;line-height:1.5;margin-top:8px}
+#lf{display:grid;grid-template-columns:1fr;gap:10px;margin:26px 0 14px}
+.hint a{color:#fff;text-decoration:underline;cursor:pointer}
+@media(max-width:520px){#who{display:none}}
 </style>
 </head>
 <body style="background:#000;color:#fff">
-<div class="wrap">
+<div class="login hidden" id="login">
+  <div class="loginbox">
+    <span class="badge">Personal Expense Tracker</span>
+    <h1>Welcome <em>back</em>.</h1>
+    <p class="lede">Sign in with Google to open your own private expense tracker. Everyone who signs in gets their own separate data.</p>
+    <div id="gbtn" style="margin:26px 0 14px;min-height:44px"></div>
+    <p class="hint">We only keep your name and email, to keep your expenses separate. We never see your Google password.</p>
+    <p class="hint" id="lerr" style="color:#f26b1d"></p>
+  </div>
+</div>
+<div class="wrap hidden" id="app">
   <header>
     <a class="logo" href="#"><svg width="22" height="22" viewBox="0 0 24 24" fill="currentColor"><g transform="rotate(-30 12 12)"><circle cx="7.3" cy="3.2" r="1.45"/><rect x="5.5" y="4.7" width="3.6" height="14.6" rx="1.8"/><rect x="14.9" y="4.7" width="3.6" height="14.6" rx="1.8"/><circle cx="16.7" cy="20.8" r="1.45"/></g></svg>Ledger<span>.me</span></a>
-    <button class="btn ghost" id="reset" style="height:36px">Clear all</button>
+    <div style="display:flex;gap:8px;align-items:center"><span id="who" style="color:var(--muted);font-size:13px"></span><button class="btn ghost" id="logout" style="height:36px">Log out</button><button class="btn ghost" id="reset" style="height:36px">Clear all</button></div>
   </header>
 
   <span class="badge">Personal Expense Tracker</span>
@@ -95,16 +112,51 @@ h2{font-weight:500;letter-spacing:-.03em;font-size:20px;margin:0 0 14px}
   var today=new Date().toISOString().slice(0,10);
   $("date").value=today;$("month").value=today.slice(0,7);
   function esc(s){return String(s).replace(/[&<>"]/g,function(c){return{"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]})}
-  function key(){try{return localStorage.getItem("ledger:key")||""}catch(e){return ""}}
+  var TK="ledger:token";
+  function tok(){try{return localStorage.getItem(TK)||""}catch(e){return ""}}
+  function setTok(t){try{if(t)localStorage.setItem(TK,t);else localStorage.removeItem(TK)}catch(e){}}
+  function show(inApp){$("app").classList.toggle("hidden",!inApp);$("login").classList.toggle("hidden",inApp);if(!inApp)loadGoogle()}
   function api(method,url,body){
-    var h={"Content-Type":"application/json"};if(key())h["x-api-key"]=key();
+    var h={"Content-Type":"application/json"};if(tok())h["Authorization"]="Bearer "+tok();
     return fetch(url,{method:method,headers:h,body:body?JSON.stringify(body):undefined}).then(function(r){
-      if(r.status===401){var k=prompt("Enter your API key");if(k){try{localStorage.setItem("ledger:key",k)}catch(e){}return api(method,url,body)}throw new Error("Unauthorized")}
       if(r.status===204)return null;
-      return r.json().then(function(d){if(!r.ok)throw new Error(d.error||"Request failed");return d});
+      return r.json().catch(function(){return {}}).then(function(d){
+        if(r.status===401&&!/^\/api\/auth\//.test(url)){setTok("");show(false);throw new Error("Please log in")}
+        if(!r.ok)throw new Error(d.error||"Request failed");return d;
+      });
     });
   }
-  function fail(e){alert(e.message||"Something went wrong")}
+  function fail(e){if(e.message!=="Please log in")alert(e.message||"Something went wrong")}
+
+  /* ---- Sign in with Google ---- */
+  var cid=null,gState=0; // 0 = not started, 1 = loading, 2 = ready
+  function drawButton(){
+    if(!window.google||!cid)return;
+    google.accounts.id.initialize({client_id:cid,callback:function(r){
+      $("lerr").textContent="";
+      api("POST","/api/auth/google",{credential:r.credential}).then(function(d){setTok(d.token);enter(d.name||d.email)}).catch(function(e){$("lerr").textContent=e.message});
+    }});
+    google.accounts.id.renderButton($("gbtn"),{theme:"filled_black",size:"large",shape:"rectangular",text:"continue_with",width:300});
+    gState=2;
+  }
+  function loadGoogle(){
+    if(gState===2){drawButton();return}
+    if(gState===1)return;
+    gState=1;
+    fetch("/api/config").then(function(r){return r.json()}).then(function(c){
+      if(!c.googleClientId){gState=0;$("lerr").textContent="Google sign-in isn’t set up on this server yet.";return}
+      cid=c.googleClientId;
+      var s=document.createElement("script");s.src="https://accounts.google.com/gsi/client";s.async=true;
+      s.onload=drawButton;s.onerror=function(){gState=0;$("lerr").textContent="Couldn’t load Google sign-in. Check your connection and refresh."};
+      document.head.appendChild(s);
+    }).catch(function(){gState=0;$("lerr").textContent="Couldn’t reach the server."});
+  }
+  function enter(who){$("who").textContent=who;show(true);render()}
+  $("logout").addEventListener("click",function(){
+    api("POST","/api/logout").catch(function(){}).then(function(){setTok("");if(window.google)google.accounts.id.disableAutoSelect();show(false)});
+  });
+
+  /* ---- app ---- */
   function render(){
     var m=$("month").value||today.slice(0,7);
     Promise.all([api("GET","/api/expenses?month="+m),api("GET","/api/summary?month="+m)]).then(function(res){
@@ -125,8 +177,8 @@ h2{font-weight:500;letter-spacing:-.03em;font-size:20px;margin:0 0 14px}
   $("list").addEventListener("click",function(e){var id=e.target.getAttribute("data-id");if(!id)return;api("DELETE","/api/expenses/"+id).then(render).catch(fail)});
   $("month").addEventListener("change",render);
   $("setBudget").addEventListener("click",function(){var v=prompt("Monthly budget (₹)");if(v===null)return;v=parseFloat(v);if(v>=0)api("PUT","/api/budget",{amount:v}).then(render).catch(fail)});
-  $("reset").addEventListener("click",function(){if(confirm("Delete all expenses?"))api("DELETE","/api/expenses").then(render).catch(fail)});
-  render();
+  $("reset").addEventListener("click",function(){if(confirm("Delete all your expenses?"))api("DELETE","/api/expenses").then(render).catch(fail)});
+  if(tok())api("GET","/api/me").then(function(me){enter(me.name||me.email)}).catch(function(){show(false)});else show(false);
 })();
 </script>
 </body>
