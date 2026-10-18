@@ -5,7 +5,7 @@ A full-stack expense tracker where every person signs in with Google and gets th
 **Live demo:** https://expense-tracker-wfbh.onrender.com
 *(Hosted on a free plan, so the first visit after a quiet period can take up to a minute to wake up.)*
 
-<!-- Add a screenshot: save it as docs/screenshot.png, then replace this line with: ![Ledger screenshot](docs/screenshot.png) -->
+![Ledger screenshot](docs/screenshot.png)
 
 ## Features
 - **Sign in with Google**: no passwords to manage; each account gets a separate ledger
